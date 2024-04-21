@@ -33,7 +33,7 @@ namespace DotnetLambdaCdkPipeline
                     BuildEnvironment = new BuildEnvironment
                     {
                         BuildImage = LinuxBuildImage.AMAZON_LINUX_2_4,
-                        ComputeType = ComputeType.MEDIUM,
+                        ComputeType = ComputeType.SMALL,
 
                         // Specify true to get a privileged container inside the build environment image
                         Privileged = true

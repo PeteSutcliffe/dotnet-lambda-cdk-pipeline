@@ -32,7 +32,7 @@ namespace DotnetLambdaCdkPipeline
                 Env = new Amazon.CDK.Environment
                 {
                     Account = "718130414285",
-                    Region = "eu-west-1",
+                    Region = "us-east-1",
                 }
 
 
