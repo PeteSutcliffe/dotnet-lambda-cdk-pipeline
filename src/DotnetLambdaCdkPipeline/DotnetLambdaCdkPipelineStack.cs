@@ -40,6 +40,8 @@ namespace DotnetLambdaCdkPipeline
                     }
                 })
             });
+
+            var devStage = pipeline.AddStage(new DotnetLambdaCdkPipelineStage(this, "Development"));
         }
     }
 }
