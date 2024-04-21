@@ -24,7 +24,7 @@ namespace DotnetLambdaCdkPipeline
                 Synth = new CodeBuildStep("Synth", new CodeBuildStepProps
                 {
                     // The files downloaded from the repository will be placed in the working directory when the script is executed
-                    Input = CodePipelineSource.CodeCommit(repository, "master"),
+                    Input = CodePipelineSource.CodeCommit(repository, "main"),
 
                     // Commands to run to generate CDK Cloud Assembly
                     Commands = new string[] { "npm install -g aws-cdk", "cdk synth" },
