@@ -99,6 +99,11 @@ namespace DotnetLambdaCdkPipeline
                     }
                 })
             });
+
+            var prodStage = pipeline.AddStage(new DotnetLambdaCdkPipelineStage(this, "Production"), new AddStageOpts
+            {
+                Pre = new[] { new ManualApprovalStep("PromoteToProd") }
+            });
         }
     }
 }
