@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using Amazon.CDK;
 using Amazon.CDK.AWS.CodeBuild;
 using Amazon.CDK.AWS.CodeCommit;
+using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.Pipelines;
 using Constructs;
 
@@ -10,7 +12,6 @@ namespace DotnetLambdaCdkPipeline
     {
         internal DotnetLambdaCdkPipelineStack(Construct scope, string id, IStackProps props = null) : base(scope, id, props)
         {
-
             var repository = Repository.FromRepositoryName(this, "repository", "dotnet-lambda-cdk-pipeline");
 
             // This construct creates a pipeline with 3 stages: Source, Build, and UpdatePipeline
@@ -42,6 +43,62 @@ namespace DotnetLambdaCdkPipeline
             });
 
             var devStage = pipeline.AddStage(new DotnetLambdaCdkPipelineStage(this, "Development"));
+
+            // Add this code for test reports
+            var reportGroup = new ReportGroup(this, "TestReports", new ReportGroupProps
+            {
+                ReportGroupName = "TestReports"
+            });
+
+            // Policy statements for CodeBuild Project Role
+            var policyProps = new PolicyStatementProps()
+            {
+                Actions = new string[] {
+                    "codebuild:CreateReportGroup",
+                    "codebuild:CreateReport",
+                    "codebuild:UpdateReport",
+                    "codebuild:BatchPutTestCases"
+                },
+                Effect = Effect.ALLOW,
+                Resources = new string[] { reportGroup.ReportGroupArn }
+            };
+
+            // PartialBuildSpec in AWS CDK for C# can be created using Dictionary
+            var reports = new Dictionary<string, object>()
+            {
+                {
+                    "reports", new Dictionary<string, object>()
+                    {
+                        {
+                            reportGroup.ReportGroupArn, new Dictionary<string,object>()
+                            {
+                                { "file-format", "VisualStudioTrx" },
+                                { "files", "**/*" },
+                                { "base-directory", "./testresults" }
+                            }
+                        }
+                    }
+                }
+            };
+
+            devStage.AddPre(new Step[]
+            {
+                new CodeBuildStep("Unit Test", new CodeBuildStepProps
+                {
+                    Commands= new string[]
+                    {
+                        "dotnet test -c Release ./src/SampleLambda/test/SampleLambda.Tests/SampleLambda.Tests.csproj --logger trx --results-directory ./testresults",
+                    },
+                    PrimaryOutputDirectory = "./testresults",
+                    PartialBuildSpec= BuildSpec.FromObject(reports),
+                    RolePolicyStatements = new PolicyStatement[] { new PolicyStatement(policyProps) },
+                    BuildEnvironment = new BuildEnvironment
+                    {
+                        BuildImage = LinuxBuildImage.AMAZON_LINUX_2_4,
+                        ComputeType = ComputeType.MEDIUM
+                    }
+                })
+            });
         }
     }
 }
